@@ -485,11 +485,15 @@ Languages:
         deletions = 0
         for repo in await self.repos:
             r = await self.queries.query_rest(f"/repos/{repo}/stats/contributors")
+            if not r:
+                print(f"No data returned for repo: {repo}")
+                continue
             for author_obj in r:
                 # Handle malformed response from the API by skipping this repo
                 if not isinstance(author_obj, dict) or not isinstance(
                     author_obj.get("author", {}), dict
                 ):
+                    print(f"Malformed response for repo: {repo}")
                     continue
                 author = author_obj.get("author", {}).get("login", "")
                 if author != self.username:
@@ -498,8 +502,11 @@ Languages:
                 for week in author_obj.get("weeks", []):
                     additions += week.get("a", 0)
                     deletions += week.get("d", 0)
+                    print(f"Week: {week}, Additions: {additions}, Deletions: {deletions}")
 
         self._lines_changed = (additions, deletions)
+        if additions == 0 and deletions == 0:
+            print("No lines changed were recorded.")
         return self._lines_changed
 
     @property
